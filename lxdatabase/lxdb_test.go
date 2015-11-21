@@ -3,7 +3,6 @@ package lxdatabase_test
 import (
 	"github.com/layer-x/layerx-commons/lxdatabase"
 
-	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"os"
@@ -29,14 +28,13 @@ func startETCD() {
 	if runtime.GOOS == "linux" {
 		binaryUrl = "https://github.com/coreos/etcd/releases/download/v2.2.2/etcd-v2.2.2-linux-amd64.tar.gz"
 		fileName = "etcd-v2.2.2-linux-amd64.tar.gz"
-		extract = exec.Command("unzip", fileName, "-C", "etcd")
+		exec.Command("mkdir", "etcd").Run()
+		extract = exec.Command("tar", "xzvf", fileName, "-C", "etcd")
 		run = exec.Command("etcd/etcd-v2.2.2-linux-amd64/etcd")
 	}
-	err := exec.Command("curl", "-L", binaryUrl, "-o", fileName).Run()
-	fmt.Printf("err: %v", err)
+	exec.Command("curl", "-L", binaryUrl, "-o", fileName).Run()
 	extract.Run()
 	go func() {
-		fmt.Printf("Running: %v", run)
 		run.Run()
 	}()
 	//5 seconds to initialize etcd
