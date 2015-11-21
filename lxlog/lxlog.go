@@ -4,18 +4,27 @@ import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"runtime"
+	"strings"
 )
 
 var log = logrus.New()
 
 func Debugf(fields logrus.Fields, format string, a ...interface{}) {
 	fields = addLine(fields)
-	log.WithFields(fields).Debugf(format, a)
+	if len(a) > 0 {
+		log.WithFields(fields).Debugf(format, a)
+	} else {
+		log.WithFields(fields).Debug(format)
+	}
 }
 
 func Infof(fields logrus.Fields, format string, a ...interface{}) {
 	fields = addLine(fields)
-	log.WithFields(fields).Infof(format, a)
+	if len(a) > 0 {
+		log.WithFields(fields).Infof(format, a)
+	} else {
+		log.WithFields(fields).Info(format)
+	}
 }
 
 func Warnf(fields logrus.Fields, format string, a ...interface{}) {
@@ -40,7 +49,18 @@ func Panicf(fields logrus.Fields, format string, a ...interface{}) {
 
 func addLine(fields logrus.Fields) logrus.Fields {
 	pc, fn, line, _ := runtime.Caller(2)
-	file := fmt.Sprintf("%s[%s:%d]", runtime.FuncForPC(pc).Name(), fn, line)
+	pathComponents := strings.Split(fn, "/")
+	var truncatedPath string
+	if len(pathComponents) > 3 {
+		truncatedPath = strings.Join(pathComponents[len(pathComponents)-2:], "/")
+	} else {
+		truncatedPath = strings.Join(pathComponents, "/")
+	}
+	fnName := runtime.FuncForPC(pc).Name()
+	fnNameComponents :=strings.Split(fnName, "/")
+	truncatedFnName := fnNameComponents[len(fnNameComponents)-1]
+
+	file := fmt.Sprintf("%s[%s:%d]", truncatedFnName, truncatedPath, line)
 	fields["file"] = file
 	return fields
 }
