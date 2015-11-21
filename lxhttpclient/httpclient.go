@@ -37,6 +37,9 @@ func Get(url string, path string, headers map[string]string) (*http.Response, []
 		return resp, emptyBytes, lxerrors.New("error performing get request", err)
 	}
 	respBytes, err := ioutil.ReadAll(resp.Body)
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return resp, emptyBytes, lxerrors.New("error reading get response", err)
 	}
@@ -85,6 +88,9 @@ func postData(url string, path string, headers map[string]string, data []byte) (
 		return resp, emptyBytes, lxerrors.New("error performing get request", err)
 	}
 	respBytes, err := ioutil.ReadAll(resp.Body)
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return resp, emptyBytes, lxerrors.New("error reading get response", err)
 	}
