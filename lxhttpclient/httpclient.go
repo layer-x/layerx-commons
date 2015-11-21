@@ -62,14 +62,12 @@ func postPB(url string, path string, headers map[string]string, pb proto.Message
 	if err != nil {
 		return nil, emptyBytes, lxerrors.New("could not proto.Marshal mesasge", err)
 	}
-	fmt.Printf("posting pb: %s", data)
 	return postData(url, path, headers, data)
 }
 
 func postJson(url string, path string, headers map[string]string, jsonStruct interface{}) (*http.Response, []byte, error) {
 	//err has already been caught
 	data, _ := json.Marshal(jsonStruct)
-	fmt.Printf("posting json: %s", data)
 	return postData(url, path, headers, data)
 }
 

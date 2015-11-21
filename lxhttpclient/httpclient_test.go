@@ -4,7 +4,6 @@ import (
 	"github.com/layer-x/layerx-commons/lxhttpclient"
 
 	"encoding/json"
-	"fmt"
 	"github.com/go-martini/martini"
 	"github.com/gogo/protobuf/proto"
 	"github.com/mesos/mesos-go/mesosproto"
@@ -32,10 +31,8 @@ func runTestServer() {
 	m.Post("/post_json", func(res http.ResponseWriter, req *http.Request) (int, string) {
 		body, _ := ioutil.ReadAll(req.Body)
 		var fake fakeJSON
-		fmt.Printf("got: %s", string(body))
 		err := json.Unmarshal(body, &fake)
 		if err != nil {
-			fmt.Printf("%v", err)
 			return 500, ERROR
 		}
 		return 202, EXPECTED_POST_RESULT
@@ -43,10 +40,8 @@ func runTestServer() {
 	m.Post("/post_pb", func(res http.ResponseWriter, req *http.Request) (int, string) {
 		body, _ := ioutil.ReadAll(req.Body)
 		fake := &mesosproto.FrameworkID{}
-		fmt.Printf("got: %s", string(body))
 		err := proto.Unmarshal(body, fake)
 		if err != nil {
-			fmt.Printf("%v", err)
 			return 500, ERROR
 		}
 		return 202, EXPECTED_POST_RESULT
