@@ -16,6 +16,21 @@
 			"Rev": "33e0aa1cb7c019ccc3fbe049a8262a6403d30504"
 		},
 		{
+			"ImportPath": "github.com/coreos/etcd/client",
+			"Comment": "v2.3.0-alpha.0-40-g185097f",
+			"Rev": "185097ffaa627b909007e772c175e8fefac17af3"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/pkg/pathutil",
+			"Comment": "v2.3.0-alpha.0-40-g185097f",
+			"Rev": "185097ffaa627b909007e772c175e8fefac17af3"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/pkg/types",
+			"Comment": "v2.3.0-alpha.0-40-g185097f",
+			"Rev": "185097ffaa627b909007e772c175e8fefac17af3"
+		},
+		{
 			"ImportPath": "github.com/go-martini/martini",
 			"Comment": "v1.0-168-g1766d4b",
 			"Rev": "1766d4b551f29d93db1e721e19b15580699e26cc"
@@ -39,6 +54,14 @@
 			"ImportPath": "github.com/onsi/gomega",
 			"Comment": "v1.0-71-g2152b45",
 			"Rev": "2152b45fa28a361beba9aab0885972323a444e28"
+		},
+		{
+			"ImportPath": "github.com/ugorji/go/codec",
+			"Rev": "1a8bf87a90ddcdc7deaa0038f127ac62135fdd58"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "b4e17d61b15679caf2335da776c614169a1b4643"
 		}
 	]
 }

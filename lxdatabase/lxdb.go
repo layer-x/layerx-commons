@@ -1,13 +1,13 @@
 package lxdatabase
 
 import (
+	"fmt"
 	"github.com/coreos/etcd/client"
 	"github.com/layer-x/layerx-commons/lxerrors"
 	"golang.org/x/net/context"
+	"strings"
 	"sync"
 	"time"
-	"fmt"
-	"strings"
 )
 
 var c client.Client
@@ -98,7 +98,7 @@ func Rmdir(dir string, recursive bool) error {
 	dir = prefixKey(dir)
 	kapi := client.NewKeysAPI(c)
 	opts := &client.DeleteOptions{
-		Dir: true,
+		Dir:       true,
 		Recursive: recursive,
 	}
 	resp, err := kapi.Delete(context.Background(), dir, opts)
@@ -134,7 +134,7 @@ func Ls(dir string) (map[string]string, error) {
 
 func prefixKey(key string) string {
 	if !strings.HasPrefix(key, "/") {
-		key = "/"+key
+		key = "/" + key
 	}
 	return key
 }

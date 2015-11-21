@@ -3,12 +3,12 @@ package lxdatabase_test
 import (
 	"github.com/layer-x/layerx-commons/lxdatabase"
 
+	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"runtime"
-	"os/exec"
-	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 	"time"
 )
 
@@ -93,8 +93,8 @@ var _ = Describe("Lxdb", func() {
 			Expect(keys).To(ContainElement("bar"))
 		})
 	})
-	Describe("cleanup", func(){
-		It("cleans up etcd", func(){
+	Describe("cleanup", func() {
+		It("cleans up etcd", func() {
 			os.RemoveAll(fileName)
 			os.RemoveAll("etcd")
 			os.RemoveAll("default.etcd")
