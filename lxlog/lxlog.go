@@ -1,7 +1,8 @@
 package lxlog
+
 import (
-	"github.com/Sirupsen/logrus"
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"runtime"
 )
 
@@ -42,22 +43,4 @@ func addLine(fields logrus.Fields) logrus.Fields {
 	file := fmt.Sprintf("%s[%s:%d]", runtime.FuncForPC(pc).Name(), fn, line)
 	fields["file"] = file
 	return fields
-}
-
-func main(){
-	Infof(logrus.Fields{
-		"val1": 5,
-		"val2": true,
-		"val3": "this",
-	}, "Here's some %s info", "special")
-	Warnf(logrus.Fields{
-		"val1": 5,
-		"val2": true,
-		"val3": "this",
-	}, "Here's some %s info", "special")
-	Errorf(logrus.Fields{
-		"val1": 5,
-		"val2": true,
-		"val3": "this",
-	}, "Here's some %s info", "special")
 }
