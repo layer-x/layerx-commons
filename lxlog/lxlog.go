@@ -29,22 +29,38 @@ func Infof(fields logrus.Fields, format string, a ...interface{}) {
 
 func Warnf(fields logrus.Fields, format string, a ...interface{}) {
 	fields = addLine(fields)
-	log.WithFields(fields).Warnf(format, a)
+	if len(a) > 0 {
+		log.WithFields(fields).Warnf(format, a)
+	} else {
+		log.WithFields(fields).Warn(format)
+	}
 }
 
 func Errorf(fields logrus.Fields, format string, a ...interface{}) {
 	fields = addLine(fields)
-	log.WithFields(fields).Errorf(format, a)
+	if len(a) > 0 {
+		log.WithFields(fields).Errorf(format, a)
+	} else {
+		log.WithFields(fields).Error(format)
+	}
 }
 
 func Fatalf(fields logrus.Fields, format string, a ...interface{}) {
 	fields = addLine(fields)
-	log.WithFields(fields).Fatalf(format, a)
+	if len(a) > 0 {
+		log.WithFields(fields).Fatalf(format, a)
+	} else {
+		log.WithFields(fields).Fatal(format)
+	}
 }
 
 func Panicf(fields logrus.Fields, format string, a ...interface{}) {
 	fields = addLine(fields)
-	log.WithFields(fields).Panicf(format, a)
+	if len(a) > 0 {
+		log.WithFields(fields).Panicf(format, a)
+	} else {
+		log.WithFields(fields).Panic(format)
+	}
 }
 
 func addLine(fields logrus.Fields) logrus.Fields {
