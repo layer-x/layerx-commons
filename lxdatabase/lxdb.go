@@ -111,7 +111,7 @@ func Rmdir(dir string, recursive bool) error {
 	return nil
 }
 
-func Ls(dir string) (map[string]string, error) {
+func GetKeys(dir string) (map[string]string, error) {
 	m.Lock()
 	defer m.Unlock()
 	dir = prefixKey(dir)
@@ -128,6 +128,27 @@ func Ls(dir string) (map[string]string, error) {
 		if !node.Dir {
 			result[node.Key] = node.Value
 		} //ignore directories
+	}
+	return result, nil
+}
+
+func GetSubdirectories(dir string) ([]string, error) {
+	m.Lock()
+	defer m.Unlock()
+	dir = prefixKey(dir)
+	kapi := client.NewKeysAPI(c)
+	resp, err := kapi.Get(context.Background(), dir, nil)
+	if err != nil {
+		return []string{}, lxerrors.New("getting key/vals for dir", err)
+	}
+	if !resp.Node.Dir {
+		return []string{}, lxerrors.New("ls used on a non-dir key", err)
+	}
+	result := []string{}
+	for _, node := range resp.Node.Nodes {
+		if node.Dir {
+			result = append(result, node.Key)
+		} //ignore keys
 	}
 	return result, nil
 }

@@ -78,16 +78,28 @@ var _ = Describe("Lxdb", func() {
 			Expect(err).To(BeNil())
 		})
 	})
-	Describe("lxdatabase.Ls(key)", func() {
-		It("lists directories", func() {
-			keys, err := lxdatabase.Ls("foo_dir")
+	Describe("lxdatabase.GetKeys(key)", func() {
+		It("lists keys in directory", func() {
+			keys, err := lxdatabase.GetKeys("foo_dir")
 			Expect(err).To(BeNil())
 			Expect(keys).To(BeEmpty())
 			err = lxdatabase.Set("foo_dir/foo", "bar")
 			Expect(err).To(BeNil())
-			keys, err = lxdatabase.Ls("foo_dir")
+			keys, err = lxdatabase.GetKeys("foo_dir")
 			Expect(err).To(BeNil())
 			Expect(keys).To(ContainElement("bar"))
+		})
+	})
+	Describe("lxdatabase.GetSubdirectories(dir)", func() {
+		It("lists sbudirs in directory", func() {
+			dirs, err := lxdatabase.GetSubdirectories("foo_dir")
+			Expect(err).To(BeNil())
+			Expect(dirs).To(BeEmpty())
+			err = lxdatabase.Mkdir("foo_dir/bar_dir")
+			Expect(err).To(BeNil())
+			dirs, err = lxdatabase.GetSubdirectories("foo_dir")
+			Expect(err).To(BeNil())
+			Expect(dirs).To(ContainElement("/foo_dir/bar_dir"))
 		})
 	})
 	Describe("cleanup", func() {
