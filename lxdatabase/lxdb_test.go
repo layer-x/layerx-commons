@@ -16,7 +16,6 @@ var fileName string
 var extract *exec.Cmd
 var run *exec.Cmd
 
-//not working, must run etcd manually first
 func startETCD() {
 	//start a test etcd server (will not work if etcd already running on host
 	if runtime.GOOS == "darwin" {
