@@ -9,6 +9,10 @@ import (
 
 var log = logrus.New()
 
+func ActiveDebugMode(){
+	log.Level = logrus.DebugLevel
+}
+
 func Debugf(fields logrus.Fields, format string, a ...interface{}) {
 	fields = addLine(fields)
 	if len(a) > 0 {
