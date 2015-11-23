@@ -78,21 +78,21 @@ func postData(url string, path string, headers map[string]string, data []byte) (
 	completeURL := parseURL(url, path)
 	request, err := http.NewRequest("POST", completeURL, bytes.NewReader(data))
 	if err != nil {
-		return nil, emptyBytes, lxerrors.New("error generating get request", err)
+		return nil, emptyBytes, lxerrors.New("error generating post request", err)
 	}
 	for key, value := range headers {
 		request.Header.Add(key, value)
 	}
 	resp, err := newClient().c.Do(request)
 	if err != nil {
-		return resp, emptyBytes, lxerrors.New("error performing get request", err)
+		return resp, emptyBytes, lxerrors.New("error performing post request", err)
 	}
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		return resp, emptyBytes, lxerrors.New("error reading get response", err)
+		return resp, emptyBytes, lxerrors.New("error reading post response", err)
 	}
 
 	return resp, respBytes, nil
