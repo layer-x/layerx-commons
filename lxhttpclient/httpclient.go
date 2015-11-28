@@ -77,7 +77,7 @@ func postWithRetries(url string, path string, headers map[string]string, message
 		}
 	}()
 	if err != nil && retries > 0 {
-		return getWithRetries(url, path, headers, retries-1)
+		return postWithRetries(url, path, headers, message, retries-1)
 	}
 	return resp, respBytes, err
 }
