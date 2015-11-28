@@ -1,7 +1,8 @@
 package lxutils
+
 import (
-	"net"
 	"github.com/layer-x/layerx-commons/lxerrors"
+	"net"
 	"strconv"
 	"strings"
 )

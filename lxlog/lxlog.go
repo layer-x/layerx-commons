@@ -9,7 +9,7 @@ import (
 
 var log = logrus.New()
 
-func ActiveDebugMode(){
+func ActiveDebugMode() {
 	log.Level = logrus.DebugLevel
 }
 
@@ -77,7 +77,7 @@ func addLine(fields logrus.Fields) logrus.Fields {
 		truncatedPath = strings.Join(pathComponents, "/")
 	}
 	fnName := runtime.FuncForPC(pc).Name()
-	fnNameComponents :=strings.Split(fnName, "/")
+	fnNameComponents := strings.Split(fnName, "/")
 	truncatedFnName := fnNameComponents[len(fnNameComponents)-1]
 
 	file := fmt.Sprintf("%s[%s:%d]", truncatedFnName, truncatedPath, line)
