@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+var DefaultRetries = 3
+
 type client struct {
 	c *http.Client
 }
@@ -24,40 +26,60 @@ func newClient() *client {
 var emptyBytes []byte
 
 func Get(url string, path string, headers map[string]string) (*http.Response, []byte, error) {
-	completeURL := parseURL(url, path)
-	request, err := http.NewRequest("GET", completeURL, nil)
-	if err != nil {
-		return nil, emptyBytes, lxerrors.New("error generating get request", err)
-	}
-	for key, value := range headers {
-		request.Header.Add(key, value)
-	}
-	resp, err := newClient().c.Do(request)
-	if err != nil {
-		return resp, emptyBytes, lxerrors.New("error performing get request", err)
-	}
-	respBytes, err := ioutil.ReadAll(resp.Body)
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
-	if err != nil {
-		return resp, emptyBytes, lxerrors.New("error reading get response", err)
-	}
+	return getWithRetries(url, path, headers, DefaultRetries)
+}
 
-	return resp, respBytes, nil
+func getWithRetries(url string, path string, headers map[string]string, retries int) (*http.Response, []byte, error) {
+	resp, respBytes, err := func() (*http.Response, []byte, error) {
+		completeURL := parseURL(url, path)
+		request, err := http.NewRequest("GET", completeURL, nil)
+		if err != nil {
+			return nil, emptyBytes, lxerrors.New("error generating get request", err)
+		}
+		for key, value := range headers {
+			request.Header.Add(key, value)
+		}
+		resp, err := newClient().c.Do(request)
+		if err != nil {
+			return resp, emptyBytes, lxerrors.New("error performing get request", err)
+		}
+		respBytes, err := ioutil.ReadAll(resp.Body)
+		if resp.Body != nil {
+			defer resp.Body.Close()
+		}
+		if err != nil {
+			return resp, emptyBytes, lxerrors.New("error reading get response", err)
+		}
+
+		return resp, respBytes, nil
+	}()
+	if err != nil && retries > 0 {
+		return getWithRetries(url, path, headers, retries-1)
+	}
+	return resp, respBytes, err
 }
 
 func Post(url string, path string, headers map[string]string, message interface{}) (*http.Response, []byte, error) {
-	switch message.(type) {
-	case proto.Message:
-		return postPB(url, path, headers, message.(proto.Message))
-	default:
-		_, err := json.Marshal(message)
-		if err != nil {
-			return nil, emptyBytes, lxerrors.New("message was not of expected type `json` or `protobuf`", err)
+	return postWithRetries(url, path, headers, message, DefaultRetries)
+}
+
+func postWithRetries(url string, path string, headers map[string]string, message interface{}, retries int) (*http.Response, []byte, error) {
+	resp, respBytes, err := func() (*http.Response, []byte, error) {
+		switch message.(type) {
+		case proto.Message:
+			return postPB(url, path, headers, message.(proto.Message))
+		default:
+			_, err := json.Marshal(message)
+			if err != nil {
+				return nil, emptyBytes, lxerrors.New("message was not of expected type `json` or `protobuf`", err)
+			}
+			return postJson(url, path, headers, message)
 		}
-		return postJson(url, path, headers, message)
+	}()
+	if err != nil && retries > 0 {
+		return getWithRetries(url, path, headers, retries-1)
 	}
+	return resp, respBytes, err
 }
 
 func postPB(url string, path string, headers map[string]string, pb proto.Message) (*http.Response, []byte, error) {
