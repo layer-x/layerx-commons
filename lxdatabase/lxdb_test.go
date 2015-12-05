@@ -3,9 +3,9 @@ package lxdatabase_test
 import (
 	"github.com/layer-x/layerx-commons/lxdatabase"
 
+	"github.com/layer-x/layerx-mesos-tpi/test_helpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/layer-x/layerx-mesos-tpi/test_helpers"
 )
 
 var _ = Describe("Lxdb", func() {
