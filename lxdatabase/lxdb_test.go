@@ -5,43 +5,11 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"os"
-	"os/exec"
-	"runtime"
-	"time"
+	"github.com/layer-x/layerx-mesos-tpi/test_helpers"
 )
 
-var binaryUrl string
-var fileName string
-var extract *exec.Cmd
-var run *exec.Cmd
-
-func startETCD() {
-	//start a test etcd server (will not work if etcd already running on host
-	if runtime.GOOS == "darwin" {
-		binaryUrl = "https://github.com/coreos/etcd/releases/download/v2.2.2/etcd-v2.2.2-darwin-amd64.zip"
-		fileName = "etcd-v2.2.2-darwin-amd64.zip"
-		extract = exec.Command("unzip", fileName, "-d", "etcd")
-		run = exec.Command("etcd/etcd-v2.2.2-darwin-amd64/etcd")
-	}
-	if runtime.GOOS == "linux" {
-		binaryUrl = "https://github.com/coreos/etcd/releases/download/v2.2.2/etcd-v2.2.2-linux-amd64.tar.gz"
-		fileName = "etcd-v2.2.2-linux-amd64.tar.gz"
-		exec.Command("mkdir", "etcd").Run()
-		extract = exec.Command("tar", "xzvf", fileName, "-C", "etcd")
-		run = exec.Command("etcd/etcd-v2.2.2-linux-amd64/etcd")
-	}
-	exec.Command("curl", "-L", binaryUrl, "-o", fileName).Run()
-	extract.Run()
-	go func() {
-		run.Run()
-	}()
-	//5 seconds to initialize etcd
-	time.Sleep(5 * time.Second)
-}
-
 var _ = Describe("Lxdb", func() {
-	startETCD()
+	test_helpers.StartETCD()
 
 	BeforeEach(func() {
 		Describe("initializes without error", func() {
@@ -74,7 +42,9 @@ var _ = Describe("Lxdb", func() {
 	})
 	Describe("lxdatabase.Mkdir(key)", func() {
 		It("makes directories", func() {
-			err := lxdatabase.Mkdir("foo_dir")
+			err := lxdatabase.Rmdir("/foo_dir", true)
+			Expect(err).To(BeNil())
+			err = lxdatabase.Mkdir("foo_dir")
 			Expect(err).To(BeNil())
 		})
 	})
@@ -104,10 +74,7 @@ var _ = Describe("Lxdb", func() {
 	})
 	Describe("cleanup", func() {
 		It("cleans up etcd", func() {
-			os.RemoveAll(fileName)
-			os.RemoveAll("etcd")
-			os.RemoveAll("default.etcd")
-			exec.Command("pkill", "etcd")
+			test_helpers.CleanupETCD()
 		})
 	})
 })
