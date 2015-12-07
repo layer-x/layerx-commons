@@ -14,7 +14,7 @@ func ActiveDebugMode() {
 }
 
 func Debugf(fields logrus.Fields, format string, a ...interface{}) {
-	fields = addLine(fields)
+	format = addTrace(format)
 	if len(a) > 0 {
 		log.WithFields(fields).Debugf(format, a)
 	} else {
@@ -23,7 +23,7 @@ func Debugf(fields logrus.Fields, format string, a ...interface{}) {
 }
 
 func Infof(fields logrus.Fields, format string, a ...interface{}) {
-	fields = addLine(fields)
+	format = addTrace(format)
 	if len(a) > 0 {
 		log.WithFields(fields).Infof(format, a)
 	} else {
@@ -32,7 +32,7 @@ func Infof(fields logrus.Fields, format string, a ...interface{}) {
 }
 
 func Warnf(fields logrus.Fields, format string, a ...interface{}) {
-	fields = addLine(fields)
+	format = addTrace(format)
 	if len(a) > 0 {
 		log.WithFields(fields).Warnf(format, a)
 	} else {
@@ -41,7 +41,7 @@ func Warnf(fields logrus.Fields, format string, a ...interface{}) {
 }
 
 func Errorf(fields logrus.Fields, format string, a ...interface{}) {
-	fields = addLine(fields)
+	format = addTrace(format)
 	if len(a) > 0 {
 		log.WithFields(fields).Errorf(format, a)
 	} else {
@@ -50,7 +50,7 @@ func Errorf(fields logrus.Fields, format string, a ...interface{}) {
 }
 
 func Fatalf(fields logrus.Fields, format string, a ...interface{}) {
-	fields = addLine(fields)
+	format = addTrace(format)
 	if len(a) > 0 {
 		log.WithFields(fields).Fatalf(format, a)
 	} else {
@@ -59,7 +59,7 @@ func Fatalf(fields logrus.Fields, format string, a ...interface{}) {
 }
 
 func Panicf(fields logrus.Fields, format string, a ...interface{}) {
-	fields = addLine(fields)
+	format = addTrace(format)
 	if len(a) > 0 {
 		log.WithFields(fields).Panicf(format, a)
 	} else {
@@ -67,7 +67,7 @@ func Panicf(fields logrus.Fields, format string, a ...interface{}) {
 	}
 }
 
-func addLine(fields logrus.Fields) logrus.Fields {
+func addTrace(format string) string {
 	pc, fn, line, _ := runtime.Caller(2)
 	pathComponents := strings.Split(fn, "/")
 	var truncatedPath string
@@ -80,7 +80,7 @@ func addLine(fields logrus.Fields) logrus.Fields {
 	fnNameComponents := strings.Split(fnName, "/")
 	truncatedFnName := fnNameComponents[len(fnNameComponents)-1]
 
-	file := fmt.Sprintf("%s[%s:%d]", truncatedFnName, truncatedPath, line)
-	fields["file"] = file
-	return fields
+	file := fmt.Sprintf("%s[%s:%d] ", truncatedFnName, truncatedPath, line)
+
+	return file + format
 }
