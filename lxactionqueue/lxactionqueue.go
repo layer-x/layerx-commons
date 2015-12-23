@@ -1,5 +1,11 @@
 package lxactionqueue
 
+type ActionQueue interface {
+	Size() int
+	Push(func())
+	Pop () *action
+}
+
 //action
 type action struct {
 	callback func()
