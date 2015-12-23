@@ -4,6 +4,7 @@ type ActionQueue interface {
 	Size() int
 	Push(func())
 	Pop () *action
+	ExecuteNext()
 }
 
 //action
@@ -44,4 +45,11 @@ func (a *actionQueue) Pop () *action {
 	actn := a.actions[0]
 	a.actions = a.actions[1:]
 	return &actn
+}
+
+func (a *actionQueue) ExecuteNext() {
+	actn := a.Pop()
+	if actn != nil {
+		actn.Call()
+	}
 }
