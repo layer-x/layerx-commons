@@ -11,12 +11,13 @@ import (
 var _ = Describe("Lxdb", func() {
 	test_helpers.StartETCD()
 
-	BeforeEach(func() {
-		Describe("initializes without error", func() {
+	Describe("Init(etcd_url)", func(){
+		It("initializes without error", func() {
 			err := lxdatabase.Init([]string{"http://127.0.0.1:2379"})
 			Expect(err).To(BeNil())
 		})
 	})
+
 	Describe("lxdatabase.Set(key, val)", func() {
 		It("sets keys", func() {
 			err := lxdatabase.Set("foo", "bar")
@@ -42,9 +43,7 @@ var _ = Describe("Lxdb", func() {
 	})
 	Describe("lxdatabase.Mkdir(key)", func() {
 		It("makes directories", func() {
-			err := lxdatabase.Rmdir("/foo_dir", true)
-			Expect(err).To(BeNil())
-			err = lxdatabase.Mkdir("foo_dir")
+			err := lxdatabase.Mkdir("foo_dir")
 			Expect(err).To(BeNil())
 		})
 	})
@@ -70,6 +69,12 @@ var _ = Describe("Lxdb", func() {
 			dirs, err = lxdatabase.GetSubdirectories("foo_dir")
 			Expect(err).To(BeNil())
 			Expect(dirs).To(ContainElement("/foo_dir/bar_dir"))
+		})
+	})
+	Describe("lxdatabase.Rmdir(key)", func() {
+		It("makes directories", func() {
+			err := lxdatabase.Rmdir("/foo_dir", true)
+			Expect(err).To(BeNil())
 		})
 	})
 	Describe("cleanup", func() {
