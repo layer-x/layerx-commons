@@ -3,7 +3,25 @@ import (
 	"os"
 	"fmt"
 "io"
+	"github.com/layer-x/layerx-commons/lxerrors"
+"os/exec"
 )
+
+func Untar(src, dest string) error {
+	tarPath, err := exec.LookPath("tar")
+
+	if err != nil {
+		return lxerrors.New("tar not found in path", nil)
+	}
+
+	err = os.MkdirAll(dest, 0755)
+	if err != nil {
+		return err
+	}
+
+	return exec.Command(tarPath, "pzxf", src, "-C", dest).Run()
+}
+
 
 //from http://stackoverflow.com/questions/21060945/simple-way-to-copy-a-file-in-golang
 
