@@ -7,6 +7,8 @@ import (
 	"github.com/layer-x/layerx-commons/lxlog"
 	"net/http"
 	"time"
+	"github.com/layer-x/layerx-commons/lxerrors"
+	"encoding/json"
 )
 
 func QuietMartini() *martini.ClassicMartini {
@@ -39,4 +41,34 @@ func customLogger() martini.Handler {
 
 		lxlog.Debugf(logrus.Fields{}, fmt.Sprintf("Completed %v %s in %v\n", rw.Status(), http.StatusText(rw.Status()), time.Since(start)))
 	}
+}
+
+func Respond(res http.ResponseWriter, message interface{}) error {
+	switch message.(type){
+	case string:
+		messageString := message.(string)
+		data := []byte(messageString)
+		_, err := res.Write(data)
+		if err != nil {
+			return lxerrors.New("writing data", err)
+		}
+		return nil
+	case error:
+		responseError := message.(error)
+		data := []byte(responseError.Error())
+		_, err := res.Write(data)
+		if err != nil {
+			return lxerrors.New("writing data", err)
+		}
+		return nil
+	}
+	data, err := json.Marshal(message)
+	if err != nil {
+		return lxerrors.New("marshalling message to json", err)
+	}
+	_, err = res.Write(data)
+	if err != nil {
+		return lxerrors.New("writing data", err)
+	}
+	return nil
 }

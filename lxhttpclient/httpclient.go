@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-var DefaultRetries = 3
+var DefaultRetries = 5
 
 type client struct {
 	c *http.Client
