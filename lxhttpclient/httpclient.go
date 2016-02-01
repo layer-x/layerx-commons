@@ -68,6 +68,8 @@ func postWithRetries(url string, path string, headers map[string]string, message
 		switch message.(type) {
 		case proto.Message:
 			return postPB(url, path, headers, message.(proto.Message))
+		case *bytes.Buffer:
+			return postBuffer(url, path, headers, message.(*bytes.Buffer))
 		default:
 			_, err := json.Marshal(message)
 			if err != nil {
@@ -88,6 +90,30 @@ func postPB(url string, path string, headers map[string]string, pb proto.Message
 		return nil, emptyBytes, lxerrors.New("could not proto.Marshal mesasge", err)
 	}
 	return postData(url, path, headers, data)
+}
+
+func postBuffer(url string, path string, headers map[string]string, buffer *bytes.Buffer) (*http.Response, []byte, error) {
+	completeURL := parseURL(url, path)
+	request, err := http.NewRequest("POST", completeURL, buffer)
+	if err != nil {
+		return nil, emptyBytes, lxerrors.New("error generating post request", err)
+	}
+	for key, value := range headers {
+		request.Header.Add(key, value)
+	}
+	resp, err := newClient().c.Do(request)
+	if err != nil {
+		return resp, emptyBytes, lxerrors.New("error performing post request", err)
+	}
+	respBytes, err := ioutil.ReadAll(resp.Body)
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return resp, emptyBytes, lxerrors.New("error reading post response", err)
+	}
+
+	return resp, respBytes, nil
 }
 
 func postJson(url string, path string, headers map[string]string, jsonStruct interface{}) (*http.Response, []byte, error) {
