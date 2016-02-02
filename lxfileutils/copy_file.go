@@ -19,7 +19,10 @@ func Untar(src, dest string) error {
 		return err
 	}
 
-	return exec.Command(tarPath, "pzxf", src, "-C", dest).Run()
+	command := exec.Command(tarPath, "pzxf", src, "-C", dest)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	return command.Run()
 }
 
 

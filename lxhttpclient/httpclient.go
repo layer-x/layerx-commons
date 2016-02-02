@@ -9,6 +9,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"os"
+	"mime/multipart"
+"io"
 )
 
 var DefaultRetries = 5
@@ -55,6 +58,40 @@ func getWithRetries(url string, path string, headers map[string]string, retries 
 	}()
 	if err != nil && retries > 0 {
 		return getWithRetries(url, path, headers, retries-1)
+	}
+	return resp, respBytes, err
+}
+
+func Delete(url string, path string, headers map[string]string) (*http.Response, []byte, error) {
+	return deleteWithRetries(url, path, headers, DefaultRetries)
+}
+
+func deleteWithRetries(url string, path string, headers map[string]string, retries int) (*http.Response, []byte, error) {
+	resp, respBytes, err := func() (*http.Response, []byte, error) {
+		completeURL := parseURL(url, path)
+		request, err := http.NewRequest("DELETE", completeURL, nil)
+		if err != nil {
+			return nil, emptyBytes, lxerrors.New("error generating delete request", err)
+		}
+		for key, value := range headers {
+			request.Header.Add(key, value)
+		}
+		resp, err := newClient().c.Do(request)
+		if err != nil {
+			return resp, emptyBytes, lxerrors.New("error performing delete request", err)
+		}
+		respBytes, err := ioutil.ReadAll(resp.Body)
+		if resp.Body != nil {
+			defer resp.Body.Close()
+		}
+		if err != nil {
+			return resp, emptyBytes, lxerrors.New("error reading delete response", err)
+		}
+
+		return resp, respBytes, nil
+	}()
+	if err != nil && retries > 0 {
+		return deleteWithRetries(url, path, headers, retries-1)
 	}
 	return resp, respBytes, err
 }
@@ -157,4 +194,43 @@ func parseURL(url string, path string) string {
 		path = strings.TrimPrefix(path, "/")
 	}
 	return fmt.Sprintf("%s/%s", url, path)
+}
+
+func PostFile(url, path, fileKey, pathToFile string)  (*http.Response, []byte, error) {
+	completeURL := parseURL(url, path)
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+
+	// this step is very important
+	fileWriter, err := bodyWriter.CreateFormFile(fileKey, pathToFile)
+	if err != nil {
+		return nil, emptyBytes, lxerrors.New("error writing to buffer", err)
+	}
+
+	// open file handle
+	fh, err := os.Open(pathToFile)
+	if err != nil {
+		return nil, emptyBytes, lxerrors.New("error opening file", err)
+	}
+
+	//iocopy
+	_, err = io.Copy(fileWriter, fh)
+	if err != nil {
+		return nil, emptyBytes, lxerrors.New("error copying file to form", err)
+	}
+
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	resp, err := http.Post(completeURL, contentType, bodyBuf)
+	if err != nil {
+		return resp, emptyBytes, lxerrors.New("error performing post", err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return resp, body, lxerrors.New("reading response body", err)
+	}
+
+	return resp, body, nil
 }
