@@ -55,11 +55,7 @@ func Respond(res http.ResponseWriter, message interface{}) error {
 		return nil
 	case error:
 		responseError := message.(error)
-		data := []byte(responseError.Error())
-		_, err := res.Write(data)
-		if err != nil {
-			return lxerrors.New("writing data", err)
-		}
+		http.Error(res, responseError.Error(), http.StatusInternalServerError)
 		return nil
 	}
 	data, err := json.Marshal(message)
