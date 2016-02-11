@@ -25,6 +25,24 @@ func Untar(src, dest string) error {
 	return command.Run()
 }
 
+func UntarNogzip(src, dest string) error {
+	tarPath, err := exec.LookPath("tar")
+
+	if err != nil {
+		return lxerrors.New("tar not found in path", nil)
+	}
+
+	err = os.MkdirAll(dest, 0755)
+	if err != nil {
+		return err
+	}
+
+	command := exec.Command(tarPath, "pxf", src, "-C", dest)
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	return command.Run()
+}
+
 
 //from http://stackoverflow.com/questions/21060945/simple-way-to-copy-a-file-in-golang
 
