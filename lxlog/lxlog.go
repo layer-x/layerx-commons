@@ -51,7 +51,7 @@ func LogCommand(cmd *exec.Cmd, debug bool) {
 		in := bufio.NewScanner(stderr)
 
 		for in.Scan() {
-			Errorf(logrus.Fields{}, in.Text())
+			Debugf(logrus.Fields{}, in.Text())
 		}
 	}()
 }
