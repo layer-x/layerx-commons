@@ -28,6 +28,30 @@ func newClient() *client {
 
 var emptyBytes []byte
 
+func GetWithUnmarshal(url string, path string, headers map[string]string, jsonObject interface{}) (*http.Response, []byte, error) {
+	resp, body, err := Get(url, path, headers)
+	if err != nil {
+		return resp, body, err
+	}
+	err = json.Unmarshal(body, jsonObject)
+	if err != nil {
+		err = lxerrors.New("could not unmarshal body into jsonObject", err)
+	}
+	return resp, body, err
+}
+
+func PostWithUnmarshal(url string, path string, headers map[string]string, message, jsonObject interface{}) (*http.Response, []byte, error) {
+	resp, body, err := Post(url, path, headers, message)
+	if err != nil {
+		return resp, body, err
+	}
+	err = json.Unmarshal(body, jsonObject)
+	if err != nil {
+		err = lxerrors.New("could not unmarshal body into jsonObject", err)
+	}
+	return resp, body, err
+}
+
 func Get(url string, path string, headers map[string]string) (*http.Response, []byte, error) {
 	return getWithRetries(url, path, headers, DefaultRetries)
 }
