@@ -5,7 +5,38 @@ import (
 "io"
 	"github.com/layer-x/layerx-commons/lxerrors"
 "os/exec"
+	"io/ioutil"
 )
+
+
+func WriteFile(path, data []byte) error {
+	err := ioutil.WriteFile(path, data, 0777)
+	if err != nil {
+		err := os.MkdirAll(filepath.Dir(path), 0777)
+		if err != nil {
+			return err
+		}
+		f, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		_, err = f.Write(data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ReadFile(path string) ([]byte, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return data, nil
+}
+
 
 func Untar(src, dest string) error {
 	tarPath, err := exec.LookPath("tar")
