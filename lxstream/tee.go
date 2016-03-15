@@ -28,4 +28,5 @@ func Tee(file *os.File, buf *bytes.Buffer) error {
 			}
 		}
 	}()
+	return nil
 }
