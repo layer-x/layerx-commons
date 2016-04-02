@@ -11,21 +11,82 @@ import (
 	"bufio"
 )
 
-var log = logrus.New()
-var optionalLogs = make(map[string]*logrus.Logger)
+const (
+	default_logger = "default_logger"
 
-func ActiveDebugMode() {
-	log.Level = logrus.DebugLevel
+	PanicLevel = Level("PanicLevel")
+	FatalLevel = Level("FatalLevel")
+	ErrorLevel = Level("ErrorLevel")
+	WarnLevel = Level("WarnLevel")
+	InfoLevel = Level("InfoLevel")
+	DebugLevel = Level("DebugLevel")
+)
+
+var logLevels = map[Level]logrus.Level{
+	PanicLevel: logrus.PanicLevel,
+	FatalLevel: logrus.FatalLevel,
+	ErrorLevel: logrus.ErrorLevel,
+	WarnLevel: logrus.WarnLevel,
+	InfoLevel: logrus.InfoLevel,
+	DebugLevel: logrus.DebugLevel,
 }
 
-func AddLogger(name string, logLevel logrus.Level, w io.Writer) {
+type Level string
+
+func (level Level) String() string {
+	return string(level)
+}
+
+type Fields logrus.Fields
+
+type LxLogger struct {
+	loggers map[string]*logrus.Logger
+	fields  Fields
+	err     error
+}
+
+func New() *LxLogger {
+	loggers := make(map[string]*logrus.Logger)
+	loggers[default_logger] = logrus.New()
+	return &LxLogger{
+		loggers: loggers,
+	}
+}
+
+func (lxlog *LxLogger) WithFields(fields Fields) *LxLogger {
+	return &LxLogger{
+		loggers: lxlog.loggers,
+		fields: fields,
+		err: lxlog.err,
+	}
+}
+
+func (lxlog *LxLogger) WithErr(err error) *LxLogger {
+	return &LxLogger{
+		loggers: lxlog.loggers,
+		fields: lxlog.fields,
+		err: err,
+	}
+}
+
+func (lxlog *LxLogger) SetLogLevel(level Level) {
+	for _, logrusLogger := range lxlog.loggers {
+		logrusLogger.Level = logLevels[level]
+	}
+}
+
+func (lxlog *LxLogger) AddWriter(name string, level Level, w io.Writer) {
 	newLogger := logrus.New()
 	newLogger.Out = w
-	newLogger.Level = logLevel
-	optionalLogs[name] = newLogger
+	newLogger.Level = logLevels[level]
+	lxlog.loggers[name] = newLogger
 }
 
-func LogCommand(cmd *exec.Cmd, debug bool) {
+func (lxlog *LxLogger) DeleteWriter(name string) {
+	delete(lxlog.loggers, name)
+}
+
+func (lxlog *LxLogger) LogCommand(cmd *exec.Cmd, asDebug bool) {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return
@@ -39,10 +100,10 @@ func LogCommand(cmd *exec.Cmd, debug bool) {
 		in := bufio.NewScanner(stdout)
 
 		for in.Scan() {
-			if debug {
-				Debugf(logrus.Fields{}, in.Text())
+			if asDebug {
+				lxlog.Debugf(in.Text())
 			} else {
-				Infof(logrus.Fields{}, in.Text())
+				lxlog.Infof(in.Text())
 			}
 		}
 	}()
@@ -51,153 +112,80 @@ func LogCommand(cmd *exec.Cmd, debug bool) {
 		in := bufio.NewScanner(stderr)
 
 		for in.Scan() {
-			Debugf(logrus.Fields{}, in.Text())
+			lxlog.Errorf(in.Text())
 		}
 	}()
 }
 
-func DeleteLogger(name string) {
-	delete(optionalLogs, name)
+func (lxlog *LxLogger) Infof(format string, a ...interface{}) {
+	lxlog.log(InfoLevel, format, a...)
 }
 
-func Debugf(fields logrus.Fields, format string, a ...interface{}) {
-	format = addTrace(format)
-	if len(a) > 0 {
-		log.WithFields(fields).Debugf(format, a)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Debugf(format, a)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	} else {
-		log.WithFields(fields).Debug(format)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Debug(format)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	}
+func (lxlog *LxLogger) Debugf(format string, a ...interface{}) {
+	lxlog.log(DebugLevel, format, a...)
 }
 
-func Infof(fields logrus.Fields, format string, a ...interface{}) {
-	format = addTrace(format)
-	if len(a) > 0 {
-		log.WithFields(fields).Infof(format, a)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Infof(format, a)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	} else {
-		log.WithFields(fields).Info(format)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Info(format)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	}
+func (lxlog *LxLogger) Warnf(format string, a ...interface{}) {
+	lxlog.log(WarnLevel, format, a...)
 }
 
-func Warnf(fields logrus.Fields, format string, a ...interface{}) {
-	format = addTrace(format)
-	if len(a) > 0 {
-		log.WithFields(fields).Warnf(format, a)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Warnf(format, a)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	} else {
-		log.WithFields(fields).Warn(format)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Warn(format)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	}
+func (lxlog *LxLogger) Errorf(format string, a ...interface{}) {
+	lxlog.log(ErrorLevel, format, a...)
 }
 
-func Errorf(fields logrus.Fields, format string, a ...interface{}) {
-	format = addTrace(format)
-	if len(a) > 0 {
-		log.WithFields(fields).Errorf(format, a)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Errorf(format, a)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	} else {
-		log.WithFields(fields).Error(format)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Error(format)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	}
+func (lxlog *LxLogger) Fatalf(format string, a ...interface{}) {
+	lxlog.log(FatalLevel, format, a...)
 }
 
-func Fatalf(fields logrus.Fields, format string, a ...interface{}) {
-	format = addTrace(format)
-	if len(a) > 0 {
-		log.WithFields(fields).Fatalf(format, a)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Fatalf(format, a)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	} else {
-		log.WithFields(fields).Fatal(format)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Fatal(format)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
-		}
-	}
+func (lxlog *LxLogger) Panicf(format string, a ...interface{}) {
+	lxlog.log(PanicLevel, format, a...)
 }
 
-func Panicf(fields logrus.Fields, format string, a ...interface{}) {
+func (lxlog *LxLogger) log(level Level, format string, a ...interface{}) {
 	format = addTrace(format)
-	if len(a) > 0 {
-		log.WithFields(fields).Panicf(format, a)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Panicf(format, a)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
+	for _, optionalLog := range lxlog.loggers {
+		entry := optionalLog.WithFields(logrus.Fields(lxlog.fields))
+		if lxlog.err != nil {
+			entry = entry.WithError(lxlog.err)
 		}
-	} else {
-		log.WithFields(fields).Panic(format)
-		for _, optionalLog := range optionalLogs {
-			optionalLog.WithFields(fields).Panic(format)
-			if flusher, ok := optionalLog.Out.(http.Flusher); ok {
-				flusher.Flush()
-			}
+		switch level {
+		case PanicLevel:
+			entry.Panicf(format, a...)
+			break
+		case FatalLevel:
+			entry.Fatalf(format, a...)
+			break
+		case ErrorLevel:
+			entry.Errorf(format, a...)
+			break
+		case WarnLevel:
+			entry.Warnf(format, a...)
+			break
+		case InfoLevel:
+			entry.Infof(format, a...)
+			break
+		case DebugLevel:
+			entry.Debugf(format, a...)
+			break
+		}
+		if flusher, ok := optionalLog.Out.(http.Flusher); ok {
+			flusher.Flush()
 		}
 	}
 }
 
 func addTrace(format string) string {
-	pc, fn, line, _ := runtime.Caller(2)
+	pc, fn, line, _ := runtime.Caller(3)
 	pathComponents := strings.Split(fn, "/")
 	var truncatedPath string
 	if len(pathComponents) > 3 {
-		truncatedPath = strings.Join(pathComponents[len(pathComponents)-2:], "/")
+		truncatedPath = strings.Join(pathComponents[len(pathComponents) - 2:], "/")
 	} else {
 		truncatedPath = strings.Join(pathComponents, "/")
 	}
 	fnName := runtime.FuncForPC(pc).Name()
 	fnNameComponents := strings.Split(fnName, "/")
-	truncatedFnName := fnNameComponents[len(fnNameComponents)-1]
+	truncatedFnName := fnNameComponents[len(fnNameComponents) - 1]
 
 	file := fmt.Sprintf("%s[%s:%d] ", truncatedFnName, truncatedPath, line)
 
