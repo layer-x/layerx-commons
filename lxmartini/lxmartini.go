@@ -24,7 +24,7 @@ func QuietMartini() *martini.ClassicMartini {
 func customLogger() martini.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
 		start := time.Now()
-		logger := lxlog.New()
+		logger := lxlog.New("martini-server")
 		addr := req.Header.Get("X-Real-IP")
 		if addr == "" {
 			addr = req.Header.Get("X-Forwarded-For")

@@ -43,13 +43,15 @@ type LxLogger struct {
 	loggers map[string]*logrus.Logger
 	fields  Fields
 	err     error
+	name	string
 }
 
-func New() *LxLogger {
+func New(name string) *LxLogger {
 	loggers := make(map[string]*logrus.Logger)
 	loggers[default_logger] = logrus.New()
 	return &LxLogger{
 		loggers: loggers,
+		name: name,
 	}
 }
 
@@ -58,6 +60,7 @@ func (lxlog *LxLogger) WithFields(fields Fields) *LxLogger {
 		loggers: lxlog.loggers,
 		fields: fields,
 		err: lxlog.err,
+		name: lxlog.name,
 	}
 }
 
@@ -66,6 +69,7 @@ func (lxlog *LxLogger) WithErr(err error) *LxLogger {
 		loggers: lxlog.loggers,
 		fields: lxlog.fields,
 		err: err,
+		name: lxlog.name,
 	}
 }
 
@@ -142,7 +146,7 @@ func (lxlog *LxLogger) Panicf(format string, a ...interface{}) {
 }
 
 func (lxlog *LxLogger) log(level Level, format string, a ...interface{}) {
-	format = addTrace(format)
+	format = lxlog.addTrace(format)
 	for _, optionalLog := range lxlog.loggers {
 		entry := optionalLog.WithFields(logrus.Fields(lxlog.fields))
 		if lxlog.err != nil {
@@ -174,7 +178,7 @@ func (lxlog *LxLogger) log(level Level, format string, a ...interface{}) {
 	}
 }
 
-func addTrace(format string) string {
+func (lxlog *LxLogger) addTrace(format string) string {
 	pc, fn, line, _ := runtime.Caller(3)
 	pathComponents := strings.Split(fn, "/")
 	var truncatedPath string
@@ -187,7 +191,7 @@ func addTrace(format string) string {
 	fnNameComponents := strings.Split(fnName, "/")
 	truncatedFnName := fnNameComponents[len(fnNameComponents) - 1]
 
-	file := fmt.Sprintf("%s[%s:%d] ", truncatedFnName, truncatedPath, line)
+	file := fmt.Sprintf("(%s): %s[%s:%d] ", lxlog.name, truncatedFnName, truncatedPath, line)
 
 	return file + format
 }
