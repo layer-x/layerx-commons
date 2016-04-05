@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-func UntarFileToDirectory(targetDirectory string, sourceTar *multipart.File, header *multipart.FileHeader) (int, error) {
+func UntarFileToDirectory(targetDirectory string, sourceTar multipart.File, header *multipart.FileHeader) (int64, error) {
 	savedTar, err := os.OpenFile(targetDirectory +filepath.Base(header.Filename), os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		return 0, lxerrors.New("creating empty file for copying to", err)
