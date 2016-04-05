@@ -3,13 +3,11 @@ package lxdatabase_test
 import (
 	"github.com/layer-x/layerx-commons/lxdatabase"
 
-	"github.com/layer-x/layerx-mesos-tpi/test_helpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Lxdb", func() {
-	test_helpers.StartETCD()
 
 	Describe("Init(etcd_url)", func(){
 		It("initializes without error", func() {
@@ -37,7 +35,7 @@ var _ = Describe("Lxdb", func() {
 			Expect(err).To(BeNil())
 			val, err := lxdatabase.Get("foo")
 			Expect(val).To(Equal(""))
-			Expect(err).To(Not(BeNil()))
+			Expect(err).ToNot(BeNil())
 			Expect(err.Error()).To(ContainSubstring("Key not found"))
 		})
 	})
@@ -75,11 +73,6 @@ var _ = Describe("Lxdb", func() {
 		It("makes directories", func() {
 			err := lxdatabase.Rmdir("/foo_dir", true)
 			Expect(err).To(BeNil())
-		})
-	})
-	Describe("cleanup", func() {
-		It("cleans up etcd", func() {
-			test_helpers.CleanupETCD()
 		})
 	})
 })
