@@ -11,6 +11,8 @@ import (
 	"bufio"
 )
 
+var GlobalLogLevel Level = InfoLevel
+
 const (
 	default_logger = "default_logger"
 
@@ -49,10 +51,12 @@ type LxLogger struct {
 func New(name string) *LxLogger {
 	loggers := make(map[string]*logrus.Logger)
 	loggers[default_logger] = logrus.New()
-	return &LxLogger{
+	lxlogger := &LxLogger{
 		loggers: loggers,
 		name: name,
 	}
+	lxlogger.SetLogLevel(GlobalLogLevel)
+	return lxlogger
 }
 
 func (lxlog *LxLogger) WithFields(fields Fields) *LxLogger {
