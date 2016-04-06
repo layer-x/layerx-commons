@@ -15,6 +15,7 @@ var GlobalLogLevel Level = InfoLevel
 
 const (
 	default_logger = "default_logger"
+	default_trace = 3
 
 	PanicLevel = Level("PanicLevel")
 	FatalLevel = Level("FatalLevel")
@@ -46,6 +47,7 @@ type LxLogger struct {
 	fields  Fields
 	err     error
 	name	string
+	trace   int
 }
 
 func New(name string) *LxLogger {
@@ -54,6 +56,7 @@ func New(name string) *LxLogger {
 	lxlogger := &LxLogger{
 		loggers: loggers,
 		name: name,
+		trace: 0,
 	}
 	lxlogger.SetLogLevel(GlobalLogLevel)
 	return lxlogger
@@ -65,6 +68,7 @@ func (lxlog *LxLogger) WithFields(fields Fields) *LxLogger {
 		fields: fields,
 		err: lxlog.err,
 		name: lxlog.name,
+		trace: lxlog.trace,
 	}
 }
 
@@ -74,6 +78,17 @@ func (lxlog *LxLogger) WithErr(err error) *LxLogger {
 		fields: lxlog.fields,
 		err: err,
 		name: lxlog.name,
+		trace: lxlog.trace,
+	}
+}
+
+func (lxlog *LxLogger) WithTrace(trace int) *LxLogger {
+	return &LxLogger{
+		loggers: lxlog.loggers,
+		fields: lxlog.fields,
+		err: lxlog.err,
+		name: lxlog.name,
+		trace: trace,
 	}
 }
 
@@ -183,7 +198,7 @@ func (lxlog *LxLogger) log(level Level, format string, a ...interface{}) {
 }
 
 func (lxlog *LxLogger) addTrace(format string) string {
-	pc, fn, line, _ := runtime.Caller(3)
+	pc, fn, line, _ := runtime.Caller(default_trace+lxlog.trace)
 	pathComponents := strings.Split(fn, "/")
 	var truncatedPath string
 	if len(pathComponents) > 3 {
