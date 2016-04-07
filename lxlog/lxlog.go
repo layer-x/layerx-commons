@@ -97,8 +97,8 @@ func (lxlog *lxLogger) WithErr(err error) Logger {
 	}
 }
 
-func (lxlog *LxLogger) WithTrace(trace int) *LxLogger {
-	return &LxLogger{
+func (lxlog *lxLogger) WithTrace(trace int) *lxLogger {
+	return &lxLogger{
 		loggers: lxlog.loggers,
 		fields: lxlog.fields,
 		err: lxlog.err,
@@ -212,7 +212,7 @@ func (lxlog *lxLogger) log(level Level, format string, a ...interface{}) {
 	}
 }
 
-func (lxlog *LxLogger) addTrace(format string) string {
+func (lxlog *lxLogger) addTrace(format string) string {
 	pc, fn, line, _ := runtime.Caller(default_trace+lxlog.trace)
 	pathComponents := strings.Split(fn, "/")
 	var truncatedPath string
