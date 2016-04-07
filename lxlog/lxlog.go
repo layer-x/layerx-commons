@@ -42,7 +42,22 @@ func (level Level) String() string {
 
 type Fields logrus.Fields
 
-type LxLogger struct {
+type Logger interface {
+	WithFields(fields Fields) Logger
+	WithErr(err error) Logger
+	SetLogLevel(level Level)
+	AddWriter(name string, level Level, w io.Writer)
+	DeleteWriter(name string)
+	LogCommand(cmd *exec.Cmd, asDebug bool)
+	Infof(format string, a ...interface{})
+	Debugf(format string, a ...interface{})
+	Warnf(format string, a ...interface{})
+	Errorf(format string, a ...interface{})
+	Fatalf(format string, a ...interface{})
+	Panicf(format string, a ...interface{})
+}
+
+type lxLogger struct {
 	loggers map[string]*logrus.Logger
 	fields  Fields
 	err     error
@@ -50,10 +65,10 @@ type LxLogger struct {
 	trace   int
 }
 
-func New(name string) *LxLogger {
+func New(name string) Logger {
 	loggers := make(map[string]*logrus.Logger)
 	loggers[default_logger] = logrus.New()
-	lxlogger := &LxLogger{
+	lxlogger := &lxLogger{
 		loggers: loggers,
 		name: name,
 		trace: 0,
@@ -62,8 +77,8 @@ func New(name string) *LxLogger {
 	return lxlogger
 }
 
-func (lxlog *LxLogger) WithFields(fields Fields) *LxLogger {
-	return &LxLogger{
+func (lxlog *lxLogger) WithFields(fields Fields) Logger {
+	return &lxLogger{
 		loggers: lxlog.loggers,
 		fields: fields,
 		err: lxlog.err,
@@ -72,8 +87,8 @@ func (lxlog *LxLogger) WithFields(fields Fields) *LxLogger {
 	}
 }
 
-func (lxlog *LxLogger) WithErr(err error) *LxLogger {
-	return &LxLogger{
+func (lxlog *lxLogger) WithErr(err error) Logger {
+	return &lxLogger{
 		loggers: lxlog.loggers,
 		fields: lxlog.fields,
 		err: err,
@@ -92,24 +107,24 @@ func (lxlog *LxLogger) WithTrace(trace int) *LxLogger {
 	}
 }
 
-func (lxlog *LxLogger) SetLogLevel(level Level) {
+func (lxlog *lxLogger) SetLogLevel(level Level) {
 	for _, logrusLogger := range lxlog.loggers {
 		logrusLogger.Level = logLevels[level]
 	}
 }
 
-func (lxlog *LxLogger) AddWriter(name string, level Level, w io.Writer) {
+func (lxlog *lxLogger) AddWriter(name string, level Level, w io.Writer) {
 	newLogger := logrus.New()
 	newLogger.Out = w
 	newLogger.Level = logLevels[level]
 	lxlog.loggers[name] = newLogger
 }
 
-func (lxlog *LxLogger) DeleteWriter(name string) {
+func (lxlog *lxLogger) DeleteWriter(name string) {
 	delete(lxlog.loggers, name)
 }
 
-func (lxlog *LxLogger) LogCommand(cmd *exec.Cmd, asDebug bool) {
+func (lxlog *lxLogger) LogCommand(cmd *exec.Cmd, asDebug bool) {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return
@@ -140,31 +155,31 @@ func (lxlog *LxLogger) LogCommand(cmd *exec.Cmd, asDebug bool) {
 	}()
 }
 
-func (lxlog *LxLogger) Infof(format string, a ...interface{}) {
+func (lxlog *lxLogger) Infof(format string, a ...interface{}) {
 	lxlog.log(InfoLevel, format, a...)
 }
 
-func (lxlog *LxLogger) Debugf(format string, a ...interface{}) {
+func (lxlog *lxLogger) Debugf(format string, a ...interface{}) {
 	lxlog.log(DebugLevel, format, a...)
 }
 
-func (lxlog *LxLogger) Warnf(format string, a ...interface{}) {
+func (lxlog *lxLogger) Warnf(format string, a ...interface{}) {
 	lxlog.log(WarnLevel, format, a...)
 }
 
-func (lxlog *LxLogger) Errorf(format string, a ...interface{}) {
+func (lxlog *lxLogger) Errorf(format string, a ...interface{}) {
 	lxlog.log(ErrorLevel, format, a...)
 }
 
-func (lxlog *LxLogger) Fatalf(format string, a ...interface{}) {
+func (lxlog *lxLogger) Fatalf(format string, a ...interface{}) {
 	lxlog.log(FatalLevel, format, a...)
 }
 
-func (lxlog *LxLogger) Panicf(format string, a ...interface{}) {
+func (lxlog *lxLogger) Panicf(format string, a ...interface{}) {
 	lxlog.log(PanicLevel, format, a...)
 }
 
-func (lxlog *LxLogger) log(level Level, format string, a ...interface{}) {
+func (lxlog *lxLogger) log(level Level, format string, a ...interface{}) {
 	format = lxlog.addTrace(format)
 	for _, optionalLog := range lxlog.loggers {
 		entry := optionalLog.WithFields(logrus.Fields(lxlog.fields))
