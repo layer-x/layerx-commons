@@ -11,7 +11,7 @@ import (
 	"strings"
 	"os"
 	"mime/multipart"
-"io"
+	"io"
 )
 
 var DefaultRetries = 5
@@ -325,9 +325,18 @@ func PostFile(url, path, fileKey, pathToFile string)  (*http.Response, []byte, e
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
-	resp, err := http.Post(completeURL, contentType, bodyBuf)
+	request, err := http.NewRequest("POST", completeURL, bodyBuf)
 	if err != nil {
-		return resp, emptyBytes, lxerrors.New("error performing post", err)
+		return nil, emptyBytes, lxerrors.New("error generating post request", err)
+	}
+	if auth != nil {
+		request.SetBasicAuth(auth.username, auth.password)
+		auth = nil
+	}
+	request.Header.Set("Content-type", contentType)
+	resp, err := newClient().c.Do(request)
+	if err != nil {
+		return resp, emptyBytes, lxerrors.New("error performing post request", err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -454,7 +463,7 @@ func PostAsyncFile(url, path, fileKey, pathToFile string)  (*http.Response, erro
 }
 
 func parseURL(url string, path string) string {
-	if !strings.HasPrefix(url, "http://") || !strings.HasPrefix(url, "https://") {
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		url = fmt.Sprintf("http://%s", url)
 	}
 	if strings.HasSuffix(url, "/") {
